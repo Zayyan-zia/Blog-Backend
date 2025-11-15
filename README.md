@@ -137,7 +137,3 @@ Open‑source under the **MIT License**.
 **Developer:** Zayyan Zia
 
 ---
-
-
-
-If you'd like this README to include your actual API structure or your real route names, just share your backend folder or routes file!
