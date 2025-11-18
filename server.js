@@ -24,12 +24,20 @@ const transport = nodemailer.createTransport({
     pass: process.env.nodemailer_pass, 
   },
 });
-mongoose.connect(process.env.mongooseurl,{
-  useNewUrlParser: true,  
-  useUnifiedTopology: true
-}).then(() => {
-    console.log('Connected to MongoDB');
-});
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.mongooseurl, {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000, 
+    });
+    console.log('Connected to MongoDB successfully');
+  } catch (error) {
+    console.error('MongoDB connection failed:', error);
+    process.exit(1);
+  }
+};
+
+connectDB();
 app.use(express.json());
 app.use(session({
     secret: process.env.sessionsecret,
