@@ -39,16 +39,19 @@ const connectDB = async () => {
 
 connectDB();
 app.use(express.json());
+// Make sure these environment variables are set
+console.log('Checking environment variables...');
+console.log('MongoURL exists:', !!process.env.mongooseurl);
+console.log('Session secret exists:', !!process.env.sessionsecret);
+
 app.use(session({
     secret: process.env.sessionsecret,
     resave: false,
     saveUninitialized: false,
-    store:Mongostore.create({
-        mongoUrl: process.env.mongooseurl, 
+    store: Mongostore.create({
+        mongoUrl: process.env.mongooseurl,
         collectionName: 'sessions',
-        autoRemove:'native',
-        createIndexes:false,
-        ttl: 60 * 60 * 24 * 30 ,
+        ttl: 14 * 24 * 60 * 60 // 14 days
     }),
     cookie: {
         secure: true,
