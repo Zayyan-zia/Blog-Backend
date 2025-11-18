@@ -23,6 +23,12 @@ const transport = nodemailer.createTransport({
     user: process.env.nodemailer_user,
     pass: process.env.nodemailer_pass, 
   },
+  connectionTimeout: 10000, 
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
+  tls: {
+    rejectUnauthorized: false
+  }
 });
 const connectDB = async () => {
   try {
