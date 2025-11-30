@@ -5,11 +5,13 @@ const Fuse = require('fuse.js');
 const multer = require('multer');
 const session = require('express-session');
 const Mongostore = require('connect-mongo');
-const {Resend} = require('resend');
 const {v2 : cloudinary} = require('cloudinary');
+const {Sender,Recipient,EmailParams,MailerSend} = require("mailersend");
 const app = express();
 require('dotenv').config();
-const resend = new Resend(process.env.Email_Api);
+const mailersend =new MailerSend({
+  apiKey:process.env.Email_Api
+});
 const createdbytes={};
 cloudinary.config({
   cloud_name:process.env.cloudinaryName,
@@ -127,12 +129,14 @@ else{
   try{
   const bytes=crypto.randomBytes(4).toString('hex');
   createdbytes[email]={otp:bytes,expires:Date.now()+60000};
-  await resend.emails.send({
-  from: 'EchoWrite <onboarding@resend.dev>',
-  to: email, 
-  subject: 'Your OTP of EchoWrite Signup',
-  html: `<p>Your OTP for <strong>EchoWrite</strong> signup is <strong>${bytes}</strong>. It is valid for 1 minutes.</p>`,
-})
+  const sender = new Sender(process.env.nodemailer_user,"EchooWrite");
+  const recipients = [new Recipient(email)];
+  const emailParams = new EmailParams()
+  .setFrom(sender)
+  .setTo(recipients)
+  .setSubject('Your OTP of EchoWrite Signup')
+  .setHtml(`<p>Your OTP for <strong>EchoWrite</strong> signup is <strong>${bytes}</strong>. It is valid for 1 minutes.</p>`);
+  await mailersend.email.send(emailParams);
   res.status(200).send({verification:`We have sent OTP to you on your ${email} email`});
 }
 catch(err){
@@ -234,12 +238,14 @@ app.post('/login',upload.none(),async(req,res)=>{
 app.post('/newsletter',upload.none(),async(req,res)=>{
     const {name,email}=req.body;
     req.session.newsletter={name,email};
-    await resend.emails.send({
-  from: 'EchoWrite <onboarding@resend.dev>',
-  to: email, 
-  subject: 'Welcome to the Zstyles Newsletter!',
-  text: `Hi ${name || 'there'},\n\nThank you for subscribing to the Zstyles newsletter! 🎉\n\nYou’ll now be the first to know about:\n- Exclusive offers\n- New arrivals\n- Style tips and trends\n\nWe’re excited to have you with us.\n\nBest regards,\nThe Zstyles Team`,
-  html: `
+      const sender = new Sender(process.env.nodemailer_user,"EchoWrite");
+  const recipients = [new Recipient(email)];
+  const emailParams = new EmailParams()
+  .setFrom(sender)
+  .setTo(recipients)
+  .setSubject('Welcome to the Zstyles Newsletter!')
+  .setText(`Hi ${name || 'there'},\n\nThank you for subscribing to the Zstyles newsletter! 🎉\n\nYou’ll now be the first to know about:\n- Exclusive offers\n- New arrivals\n- Style tips and trends\n\nWe’re excited to have you with us.\n\nBest regards,\nThe Zstyles Team`)
+  .setHtml( `
     <p>Hi <strong>${name || 'Dear'}</strong>,</p>
     <p>🎉 Thank you for subscribing to the <strong>Zstyles Newsletter</strong>!</p>
     <p>You’ll now be the first to know about:</p>
@@ -250,9 +256,8 @@ app.post('/newsletter',upload.none(),async(req,res)=>{
     </ul>
     <p>We’re excited to have you with us. Stay tuned!</p>
     <p>Best regards,<br><strong>The Zstyles Team</strong></p>
-  `
-});
-
+  `);
+  await mailersend.email.send(emailParams);
 res.status(200).json({ success: true });
 })
 
